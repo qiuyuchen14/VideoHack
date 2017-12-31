@@ -43,8 +43,8 @@ for i, filename in enumerate(glob.iglob('/home/zoey/Downloads/ucf_sports_actions
     for img in clip_resized.iter_frames():
         video.append(img.reshape(size, size, 3, 1))
     data.append(np.concatenate(video, 3))
+
 l = np.max(list(map(lambda x: x.shape[3], data)))
-print(l)
 output = np.zeros((n, size, size, 3, l), dtype=np.float32)
 for i, video in enumerate(data):
     output[i, :, :, :, 0:video.shape[-1]] = video
