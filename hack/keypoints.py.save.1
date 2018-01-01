@@ -72,12 +72,16 @@ for i, path in enumerate(glob.iglob('/home/zoey/ucf_sports_actions/ucfaction/**/
         #if there is someone in the scene:
         Keypoints = np.array(keypoint_list)
         print('k',Keypoints.shape)
+	
       
         #Img[Keypoints[:, 0], Keypoints[:, 1]] = [255, 255, 255]
         ppl = int(Keypoints.shape[0]/18)
         print(ppl)
         print(Keypoints.shape)
-        for j in range(ppl-1):
+        for j in range(ppl):
+            for pose in range(18)
+                if Keypoints[j*18+pose,2]==0
+                    
             points = Keypoints[j*18:j*18+17,0:1]
             y1 = int(bbox(points).item(0))
             x1 = int(bbox(points).item(2))
