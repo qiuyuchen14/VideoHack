@@ -5,6 +5,8 @@ import json
 import numpy as np
 import moviepy.editor as mp
 import cv2
+import ntpath
+from os.path import join
 
 #get the biggest boundingbox:
 def bbox(points):
@@ -17,9 +19,10 @@ def bbox(points):
     a[:, 1] = np.max(points, axis=0)
     return a
 
+user = 'tim'
 
-os.chdir("/home/zoey/openpose")
-n = len(list(glob.iglob('/home/zoey/ucf_sports_actions/ucfaction/**/**/*.avi', recursive=True)))
+os.chdir("/home/{0}/openpose".format(user))
+n = len(list(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/**/**/*.avi'.format(user), recursive=True)))
 labels = []
 data = []
 nop = 1
@@ -43,8 +46,10 @@ label_action['Walk-Front'] = 12
 
 
 
+print(n, 'uden kek')
+video_json_base_path = '/home/{0}/data/avi'.format(user)
 
-for i, path in enumerate(glob.iglob('/home/zoey/ucf_sports_actions/ucfaction/**/**/*.avi', recursive=True)):
+for i, path in enumerate(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/**/**/*.avi'.format(user), recursive=True)):
     PointsList = []
     #a = mp.VideoFileClip(path)
     for key in label_action:
@@ -53,30 +58,28 @@ for i, path in enumerate(glob.iglob('/home/zoey/ucf_sports_actions/ucfaction/**/
             break
     if i % 10 == 0:
         print(i/n)
-    execute("./build/examples/openpose/openpose.bin --video {0} --write_keypoint_json /home/zoey/data/avi/ --no_display --render_pose 0".
-            format(path))
-    json_paths = get_files_paths_for_folder('/home/zoey/data/avi')
+    print(i, path)
+    execute("./build/examples/openpose/openpose.bin --video {0} --write_keypoint_json /home/{1}/data/avi/ --no_display --render_pose 0".
+            format(path, user))
+    video_name = ntpath.basename(path)
     video = []
     #Img = np.zeros((a.shape[0], a.shape[1], 3), dtype=np.uint8)
-    print('len', len(json_paths))
-    for jpath in json_paths:
+    for i in range(10000):
+        jpath = join(video_json_base_path, video_name.replace('.avi', '_') + str(i).zfill(12) + '_keypoints.json')
+        if not os.path.exists(jpath): break
+
         dictionary = json.load(open(jpath))
         people = dictionary['people']
         keypoint_list = []
         for person in people:
-            #print(person)
             pts = person['pose_keypoints']
             if len(pts) > 3:
                 keypoint_list.append(np.array(person['pose_keypoints']).reshape(18, 3))
         #print(keypoint_list)
         #if there is someone in the scene:
         Keypoints = np.array(keypoint_list)
-        print('k',Keypoints.shape)
-      
         #Img[Keypoints[:, 0], Keypoints[:, 1]] = [255, 255, 255]
         ppl = int(Keypoints.shape[0]/18)
-        print(ppl)
-        print(Keypoints.shape)
         for j in range(ppl-1):
             points = Keypoints[j*18:j*18+17,0:1]
             y1 = int(bbox(points).item(0))
@@ -92,10 +95,12 @@ for i, path in enumerate(glob.iglob('/home/zoey/ucf_sports_actions/ucfaction/**/
         #only get the largest bounding box of every frame
         PointsArray = Keypoints[peopleID*18:peopleID*18+17, :]
         PointsArr = np.array(PointsArray)
+        print(PointsArr, path)
+        if len(PointsArr): print(pts)
         PointsList.append(PointsArr.reshape(18, 3, 1, 1))
     print(np.array(PointsList).shape)
     data.append(np.concatenate(PointsList, 3))
-    execute('rm /home/zoey/data/avi/*')
+    execute('rm /home/{0}/data/avi/*'.format(user))
 
 l = np.max(list(map(lambda x: x.shape[3], data)))
 output = np.zeros((n, 18, 3, 3, l), dtype=np.float32)
@@ -104,7 +109,7 @@ for i, points in enumerate(data):
     output[i, :, :, :, 0:points.shape[-1]] = points
 
 
-np.save('/home/zoey/data/matrix.npy', output)
-np.save('/home/zoey/data/labels.npy', np.array(labels))
+np.save('/home/{0}/data/matrix.npy'.format(user), output)
+np.save('/home/{0}/data/labels.npy'.format(user), np.array(labels))
 
 
