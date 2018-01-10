@@ -82,7 +82,7 @@ class ForwardModel(torch.nn.Module):
         predictions = self.w2(x)
         return predictions
 
-model = ForwardModel()
+model = ForwardModel().cuda()
 opt = Adam(model.parameters(), lr=0.001)
 
 best_acc = 0.0
@@ -92,8 +92,8 @@ for epoch in range(100):
     print('')
     print('Epoch: {0}'.format(epoch))
     for batch, label in dl:
-        batch = Variable(batch)
-        label = Variable(label)
+        batch = Variable(batch).cuda()
+        label = Variable(label).cuda()
         opt.zero_grad()
         pred = model.forward(batch)
         loss = model.loss(pred, label)
@@ -109,8 +109,8 @@ for epoch in range(100):
     accuracy = []
     model.train(False)
     for batch, label_val in vl:
-        batch = Variable(batch)
-        label_val = Variable(label_val)
+        batch = Variable(batch).cuda()
+        label_val = Variable(label_val).cuda()
         pred_val = model.forward(batch)
         loss = model.loss(pred_val, label_val)
 
