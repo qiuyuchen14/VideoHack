@@ -30,45 +30,45 @@ def bbox(points):
 user = 'zoey'
 
 os.chdir("/home/{0}/openpose".format(user))
-n = len(list(glob.iglob('/home/{0}/action_youtube_naudio/**/**/*.avi'.format(user), recursive=True)))
+n = len(list(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/*/*/*.avi'.format(user), recursive=True)))
 labels = []
 data = []
 nop = 1
 
 
 label_action = {}
-#label_action['Diving-Side'] = 0
-#label_action['Golf-Swing-Back'] = 1
-#label_action['Golf-Swing-Front'] = 2
-#label_action['Golf-Swing-Side'] = 3
-#label_action['Kicking-Front'] = 4
-#label_action['Kicking-Side'] = 5
-#label_action['Lifting'] = 6
-#label_action['Riding-Horse'] = 7
-#label_action['Run-Side'] = 8
-#label_action['SkateBoarding-Front'] = 9
-#label_action['Swing-Bench'] = 10
-#label_action['Swing-SideAngle'] = 11
-#label_action['Walk-Front'] = 12
+label_action['Diving-Side'] = 0
+label_action['Golf-Swing-Back'] = 1
+label_action['Golf-Swing-Front'] = 2
+label_action['Golf-Swing-Side'] = 3
+label_action['Kicking-Front'] = 4
+label_action['Kicking-Side'] = 5
+label_action['Lifting'] = 6
+label_action['Riding-Horse'] = 7
+label_action['Run-Side'] = 8
+label_action['SkateBoarding-Front'] = 9
+label_action['Swing-Bench'] = 10
+label_action['Swing-SideAngle'] = 11
+label_action['Walk-Front'] = 12
 
-label_action['basketball'] = 0
-label_action['golf_swing'] = 1
-label_action['soccer_juggling'] = 2
-label_action['trampoline_jumping'] = 3
-label_action['biking'] = 4
-label_action['horse_riding'] = 5
-label_action['swing'] = 6
-label_action['volleyball_spiking'] = 7
-label_action['diving'] = 8
-label_action['tennis_swing'] = 9
-label_action['walking'] = 10
+#label_action['basketball'] = 0
+#label_action['golf_swing'] = 1
+#label_action['soccer_juggling'] = 2
+#label_action['trampoline_jumping'] = 3
+#label_action['biking'] = 4
+#label_action['horse_riding'] = 5
+#label_action['swing'] = 6
+#label_action['volleyball_spiking'] = 7
+#label_action['diving'] = 8
+#label_action['tennis_swing'] = 9
+#label_action['walking'] = 10
 
 
 
 
 video_json_base_path = '/home/{0}/data/avi'.format(user)
 
-for i, path in enumerate(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/**/**/*.avi'.format(user), recursive=True)):
+for i, path in enumerate(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/*/*/*.avi'.format(user), recursive=True)):
     PointsList = []
 
     #a = mp.VideoFileClip(path)
@@ -136,7 +136,7 @@ for i, points in enumerate(data):
     output[i, :, :, :, 0:points.shape[-1]] = points
 
 
-np.save('/home/{0}/data/testdataset/matrix.npy'.format(user), output)
-np.save('/home/{0}/data/testdataset/labels.npy'.format(user), np.array(labels))
+np.save('/home/{0}/data/UCF/matrix.npy'.format(user), output)
+np.save('/home/{0}/data/UCF/labels.npy'.format(user), np.array(labels))
 
 

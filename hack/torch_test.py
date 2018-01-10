@@ -27,9 +27,10 @@ label_action['Walk-Front'] = 12
 
 labels = []
 size = 32
-n = len(list(glob.iglob('/home/zoey/Downloads/ucf_sports_actions/ucf action/**/**/*.avi', recursive=True)))
-for i, filename in enumerate(glob.iglob('/home/zoey/Downloads/ucf_sports_actions/ucf action/**/**/*.avi', recursive=True)):
+n = len(list(glob.iglob('/home/zoey/ucf_sports_actions/ucfaction/*/*/*.avi', recursive=True)))
+for i, filename in enumerate(glob.iglob('/home/zoey/ucf_sports_actions/ucfaction/*/*/*.avi', recursive=True)):
     a = mp.VideoFileClip(filename)
+    print(a)
     for key in label_action:
         if key in filename:
             labels.append(label_action[key])
