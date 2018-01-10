@@ -66,14 +66,16 @@ vl = tor.DataLoader(VS, 128)
 class ForwardModel(torch.nn.Module):
     def __init__(self):
         super(ForwardModel, self).__init__()
-        self.w1 = torch.nn.Linear(size*size*3*144+18*2*1*144, 1024)#(18*2*1*144, 128)
-        self.w3 = torch.nn.Linear(1024, 1024)
+        self.w1 = torch.nn.Linear(size*size*3*144+18*2*1*144, 512)#(18*2*1*144, 128)
+        self.w3 = torch.nn.Linear(512, 1024)
         self.w2 = torch.nn.Linear(1024, 13)
         self.dropout = torch.nn.Dropout(0.2)
         self.loss = torch.nn.CrossEntropyLoss()
+        self.input_drop = torch.nn.Dropout(0.2)
 
     def forward(self, videos):
         videos = videos.view(videos.size(0), -1)
+        videos = self.input_drop(videos)
         x = self.w1(videos)
         x = F.relu(x)
         x = self.w3(x)
