@@ -1,21 +1,24 @@
+import torch
+import numpy as np
+import torch.utils.data as tor
+import time
+import torch.nn.functional as F
+from torch.optim import Adam
+from torch.autograd import Variable
+
 from bashmagic import *
 import os
 import glob
 import json
-import numpy as np
 import moviepy.editor as mp
 import cv2
 import ntpath
 from os.path import join
-#############################################
-#To Do:
-#predict bounding box region
-#predict each keypoint position in the next frames
-#given a catogory, produce series of actions through learning: This is very interesting to me because you can
-#personalize your robot to do different tasks. It can be possibly associated with reinforcement learning
-# so that the robot can be initialized with certain tasks and then learn how to finish it in complex environments
-#
-#############################################
+
+
+model = torch.load('/home/zoey/data/model/model.pkl')
+test = # I need to find some good videos
+
 #get the biggest boundingbox:
 def bbox(points):
     """
@@ -30,52 +33,14 @@ def bbox(points):
 user = 'zoey'
 
 os.chdir("/home/{0}/openpose".format(user))
-n = len(list(glob.iglob('/home/{0}/action_youtube_naudio/**/**/*.avi'.format(user), recursive=True)))
-labels = []
+n = len(list(glob.iglob('/home/{0}/action_youtube_naudio/diving/**/*.avi'.format(user), recursive=True)))
 data = []
 nop = 1
 
+video_json_base_path = '/home/{0}/data/testdataset/avi'.format(user)
 
-label_action = {}
-#label_action['Diving-Side'] = 0
-#label_action['Golf-Swing-Back'] = 1
-#label_action['Golf-Swing-Front'] = 2
-#label_action['Golf-Swing-Side'] = 3
-#label_action['Kicking-Front'] = 4
-#label_action['Kicking-Side'] = 5
-#label_action['Lifting'] = 6
-#label_action['Riding-Horse'] = 7
-#label_action['Run-Side'] = 8
-#label_action['SkateBoarding-Front'] = 9
-#label_action['Swing-Bench'] = 10
-#label_action['Swing-SideAngle'] = 11
-#label_action['Walk-Front'] = 12
-
-label_action['basketball'] = 0
-label_action['golf_swing'] = 1
-label_action['soccer_juggling'] = 2
-label_action['trampoline_jumping'] = 3
-label_action['biking'] = 4
-label_action['horse_riding'] = 5
-label_action['swing'] = 6
-label_action['volleyball_spiking'] = 7
-label_action['diving'] = 8
-label_action['tennis_swing'] = 9
-label_action['walking'] = 10
-
-
-
-
-video_json_base_path = '/home/{0}/data/avi'.format(user)
-
-for i, path in enumerate(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/**/**/*.avi'.format(user), recursive=True)):
+for i, path in enumerate(glob.iglob('/home/{0}/action_youtube_naudio/diving/diving/*.avi'.format(user), recursive=True)):
     PointsList = []
-
-    #a = mp.VideoFileClip(path)
-    for key in label_action:
-        if key in path:
-            labels.append(label_action[key])
-            break
     if i % 10 == 0:
         print(i/n)
     print(i, path)
@@ -127,7 +92,7 @@ for i, path in enumerate(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/**/*
             PointsList.append(PointsArr.reshape(18, 2, 1, 1))# number of keypoints, x & y, number of people, one frame
 
     data.append(np.concatenate(PointsList, 3))
-    execute('rm /home/{0}/data/avi/*'.format(user))
+    execute('rm /home/{0}/data/testdataset/avi/*'.format(user))
 
 l = np.max(list(map(lambda x: x.shape[3], data)))
 output = np.zeros((n, 18, 2, 1, l), dtype=np.float32)
@@ -137,6 +102,18 @@ for i, points in enumerate(data):
 
 
 np.save('/home/{0}/data/testdataset/matrix.npy'.format(user), output)
-np.save('/home/{0}/data/testdataset/labels.npy'.format(user), np.array(labels))
 
+for epoch in range(40):
+    accuracy = []
+    model.train(False)
+    for batch, label_val in vl:
+        batch = Variable(batch)
+        label_val = Variable(label_val)
+        pred_val = model.forward(batch)
+        loss = model.loss(pred_val, label_val)
 
+        maxvalue, argmax = torch.topk(pred_val, 1)
+        correct = torch.sum(argmax.data == label_val.view(-1, 1).data)
+        accuracy.append(correct/batch.size(0))
+    acc = np.mean(accuracy)
+    print('test:', np.mean(accuracy))
