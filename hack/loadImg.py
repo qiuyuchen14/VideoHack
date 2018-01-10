@@ -40,6 +40,7 @@ val = Data[int(n*0.8):]
 train = Data[:int(n*0.8)]
 
 m = target_tensor.shape[0]
+#need to be randomized before spliting
 target_val = target_tensor[int(m*0.8):]
 target_train = target_tensor[:int(m*0.8)]
 
