@@ -30,6 +30,7 @@ def bbox(points):
 user = 'zoey'
 
 os.chdir("/home/{0}/openpose".format(user))
+#n = len(list(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/*/*/*.avi'.format(user), recursive=True)))
 n = len(list(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/*/*/*.avi'.format(user), recursive=True)))
 labels = []
 data = []
@@ -62,7 +63,6 @@ label_action['Walk-Front'] = 12
 #label_action['diving'] = 8
 #label_action['tennis_swing'] = 9
 #label_action['walking'] = 10
-
 
 
 
@@ -136,7 +136,7 @@ for i, points in enumerate(data):
     output[i, :, :, :, 0:points.shape[-1]] = points
 
 
-np.save('/home/{0}/data/UCF/matrix.npy'.format(user), output)
-np.save('/home/{0}/data/UCF/labels.npy'.format(user), np.array(labels))
+np.save('/home/{0}/data/UCF/flowvector/matrix.npy'.format(user), output)
+np.save('/home/{0}/data/UCF/flowvector/labels.npy'.format(user), np.array(labels))
 
 
