@@ -26,6 +26,12 @@ def bbox(points):
     a[:, 0] = np.min(points, axis=0)
     a[:, 1] = np.max(points, axis=0)
     return a
+def nvector(point1x, point1y, point2x, point2y):
+    newx = (point2x - point1x)
+    newy = (point2y - point1y)
+    a = newy/newx
+    return a
+
 
 user = 'zoey'
 
@@ -34,6 +40,7 @@ os.chdir("/home/{0}/openpose".format(user))
 n = len(list(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/*/*/*.avi'.format(user), recursive=True)))
 labels = []
 data = []
+data1 = []
 nop = 1
 
 
@@ -70,6 +77,7 @@ video_json_base_path = '/home/{0}/data/avi'.format(user)
 
 for i, path in enumerate(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/*/*/*.avi'.format(user), recursive=True)):
     PointsList = []
+    PointRelation = []
 
     #a = mp.VideoFileClip(path)
     for key in label_action:
@@ -124,19 +132,31 @@ for i, path in enumerate(glob.iglob('/home/{0}/ucf_sports_actions/ucfaction/*/*/
             #only get the largest bounding box of every frame
             PointsArray = Keypoints[peopleID, :, 0:2]
             PointsArr = np.array(PointsArray)
-            PointsList.append(PointsArr.reshape(18, 2, 1, 1))# number of keypoints, x & y, number of people, one frame
+            #alternative: see relative movements among keypoints
+            PointRel = np.zeros((18, 18))
+            for r in range(18):
+                for c in range(18):
+                    PointReL[r][c] = nvector(PointsArr[r][0],PointsArr[r][1], PointsArr[c][0], PointsArr[c][1])
 
+            PointsList.append(PointsArr.reshape(18, 2, 1, 1))# number of keypoints, x & y, number of people, one frame
+            PointRelation.append(PointReL.reshape(18, 18, 1, 1)) # number of keypoints, number of keypoitns, number of people, one frame
     data.append(np.concatenate(PointsList, 3))
+    data1.append(np.concatenate(PointRelation, 3))
     execute('rm /home/{0}/data/avi/*'.format(user))
 
 l = np.max(list(map(lambda x: x.shape[3], data)))
 output = np.zeros((n, 18, 2, 1, l), dtype=np.float32)
+output1 = np.zeros((n, 18, 18, l), dtype=np.float32)
 
 for i, points in enumerate(data):
     output[i, :, :, :, 0:points.shape[-1]] = points
 
+for i, relations in enumerate(data1):
+    output1[i, :, :, :, 0:points.shape[-1]] = relations
 
-np.save('/home/{0}/data/UCF/flowvector/matrix.npy'.format(user), output)
-np.save('/home/{0}/data/UCF/flowvector/labels.npy'.format(user), np.array(labels))
+
+np.save('/home/{0}/data/UCF/keypoints.npy'.format(user), output)
+np.save('/home/{0}/data/UCF/ReLMovement.npy'.format(user), output1)
+np.save('/home/{0}/data/UCF/labels.npy'.format(user), np.array(labels))
 
 
