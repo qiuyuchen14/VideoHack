@@ -1,0 +1,51 @@
+from bashmagic import *
+import os
+import glob
+import json
+import numpy as np
+import moviepy.editor as mp
+import cv2
+
+#get the biggest boundingbox:
+def bbox(points):
+    """
+    [xmin xmax]
+    [ymin ymax]
+    """
+    a = np.zeros((2, 2))
+    a[:, 0] = np.min(points, axis=0)
+    a[:, 1] = np.max(points, axis=0)
+    return a
+
+
+os.chdir("/home/zoey/openpose")
+n = len(list(glob.iglob('/home/zoey/ucf_sports_actions/ucfaction/**/**/*.avi', recursive=True)))
+labels = []
+data = []
+nop = 1
+Dist = 0
+peopleID = -1
+
+label_action = {}
+label_action['Diving-Side'] = 0
+label_action['Golf-Swing-Back'] = 1
+label_action['Golf-Swing-Front'] = 2
+label_action['Golf-Swing-Side'] = 3
+label_action['Kicking-Front'] = 4
+label_action['Kicking-Side'] = 5
+label_action['Lifting'] = 6
+label_action['Riding-Horse'] = 7
+label_action['Run-Side'] = 8
+label_action['SkateBoarding-Front'] = 9
+label_action['Swing-Bench'] = 10
+label_action['Swing-SideAngle'] = 11
+label_action['Walk-Front'] = 12
+
+
+
+
+for i, path in enumerate(glob.iglob('/home/zoey/ucf_sports_actions/ucfaction/**/**/*.avi', recursive=True)):
+    PointsList = []
+    #a = mp.VideoFileClip(path)
+    for key in label_action:
+        if key in path:
