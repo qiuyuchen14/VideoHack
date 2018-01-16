@@ -11,41 +11,41 @@ size = 32
 user = 'zoey'
 t0 = time.time()
 
-data_tensor = np.load('/home/zoey/data/UCF/matrix.npy')
-print(time.time() - t0)
-target_tensor = np.load('/home/zoey/data/UCF/labels.npy')
+data_tensor = np.load('/home/zoey/data/Youtube/keypoints.npy')
+print(data_tensor.shape)
+#print(time.time() - t0)
+target_tensor = np.load('/home/zoey/data/Youtube/labels.npy')
 n = data_tensor.shape[0]
-data1_tensor = np.load('/home/zoey/data//matrix.npy')
-target1_tensor = np.load('/home/zoey/data/labels.npy')
-
+#data1_tensor = np.load('/home/zoey/data/Youtube/WholeImage/matrix.npy') # read original RGB image
+data2_tensor = np.load('/home/zoey/data/Youtube/ReLMovement.npy') # read keypoints relationships
+#print(data_tensor.shape)
 
 idx = np.arange(len(data_tensor))
 np.random.shuffle(idx)
 data_tensor = data_tensor[idx]
 target_tensor = target_tensor[idx]
 
-data1_tensor = data1_tensor[idx]
-target1_tensor = target1_tensor[idx]
+#data1_tensor = data1_tensor[idx]
+data2_tensor = data2_tensor[idx]
 
-print(data1_tensor.shape)
+data_tensor = data_tensor.reshape(1600, -1)
+#data1_tensor = data1_tensor.reshape(1600, -1)
+data2_tensor = data2_tensor.reshape(1600, -1)
+
+
+#Data = np.hstack([data_tensor, data1_tensor, data2_tensor])
+Data = data_tensor
+val = Data[int(n*0.8):]
+train = Data[:int(n*0.8)]
 print(data_tensor.shape)
-
-data_tensor = data_tensor.reshape(143, -1)
-data1_tensor = data1_tensor.reshape(143, -1)
-
-
-Data = np.hstack([data_tensor, data1_tensor])
-val = Data[int(n*0.9):]
-train = Data[:int(n*0.9)]
-
 m = target_tensor.shape[0]
 #need to be randomized before spliting
-target_val = target_tensor[int(m*0.9):]
-target_train = target_tensor[:int(m*0.9)]
+target_val = target_tensor[int(m*0.8):]
+target_train = target_tensor[:int(m*0.8)]
 
 
 for i in range(0, len(data_tensor), 11):
-    if len(train) > 0.9*len(data_tensor):
+    if len(train) > 0.8*len(data_tensor):
         break
     train
 
@@ -58,31 +58,58 @@ Data_Validation = torch.from_numpy(val)
 Target_Validation = torch.from_numpy(target_val)
 VS = tor.TensorDataset(Data_Validation, Target_Validation)
 
-dl = tor.DataLoader(DS, 128)
+dl = tor.DataLoader(DS, 512)
 
-vl = tor.DataLoader(VS, 128)
+vl = tor.DataLoader(VS, 512)
 
 class ForwardModel(torch.nn.Module):
+    # __init__(self):
+    #    super(ForwardModel, self).__init__()
+    #    self.w1 = torch.nn.Linear(18*2*1*536, 512)
+    #    self.w3 = torch.nn.Linear(512, 512)
+    #    self.w2 = torch.nn.Linear(512, 11)
+    #    self.dropout = torch.nn.Dropout(0.6)
+    #    self.loss = torch.nn.CrossEntropyLoss()
+    #    self.input_drop = torch.nn.Dropout(0.6)
+
+    #def forward(self, videos):
+    #    videos = videos.view(videos.size(0), -1)
+    #    videos = self.input_drop(videos)
+    #    x = self.w1(videos)
+    #    x = F.relu(x)
+    #    x = self.dropout(x)
+    #    x = self.w3(x)
+    #    x = F.relu(x)
+    #    x = self.dropout(x)
+    #    predictions = self.w2(x)
+    #    return predictions
+
     def __init__(self):
         super(ForwardModel, self).__init__()
-        self.w1 = torch.nn.Linear(size*size*3*144+18*2*1*144, 512)#(18*2*1*144, 128)
-        self.w3 = torch.nn.Linear(512, 1024)
-        self.w2 = torch.nn.Linear(1024, 13)
-        self.dropout = torch.nn.Dropout(0.1)
-        self.loss = torch.nn.CrossEntropyLoss()
-        self.input_drop = torch.nn.Dropout(0.05)
 
-    def forward(self, videos):
-        videos = videos.view(videos.size(0), -1)
-        videos = self.input_drop(videos)
-        x = self.w1(videos)
-        x = F.relu(x)
-        x = self.dropout(x)
-        x = self.w3(x)
-        x = F.relu(x)
-        x = self.dropout(x)
-        predictions = self.w2(x)
-        return predictions
+        self.inp = nn.Linear(18*2*1*536, 512)
+        self.rnn = nn.LSTM(512, 512, 2, dropout=0.05)
+        self.out = nn.Linear(512, 11)
+
+    def step(self, input, hidden=None):
+        input = self.inp(input.view(1, -1)).unsqueeze(1)
+        output, hidden = self.rnn(input, hidden)
+        output = self.out(output.squeeze(1))
+        return output, hidden
+
+    def forward(self, inputs, hidden=None, force=True, steps=0):
+        if force or steps == 0: steps = len(inputs)
+        outputs = Variable(torch.zeros(steps, 1, 1))
+        for i in range(steps):
+            if force or i == 0:
+                input = inputs[i]
+            else:
+                input = output
+            output, hidden = self.step(input, hidden)
+            outputs[i] = output
+        return outputs, hidden
+
+
 
 model = ForwardModel().cuda()
 opt = Adam(model.parameters(), lr=0.001)
